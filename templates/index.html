@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Usuários</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        form input[type="text"],
+        form input[type="email"],
+        form input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        form button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 17px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        form button:hover {
+            background-color: #0056b3;
+        }
+        .response {
+            display: none; /* <-- ESCONDIDO POR PADRÃO */
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            border: 1px solid #dee2e6;
+            white-space: pre-wrap;
+        }
+        .response.success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        .response.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastrar Novo Usuário</h1>
+        <form id="userForm">
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="password">Senha:</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="telefone">Telefone (opcional):</label>
+            <input type="text" id="telefone" name="telefone">
+
+            <button type="submit">Cadastrar Usuário</button>
+        </form>
+
+        <div id="response" class="response"></div>
+
+        <hr style="margin-top: 30px; margin-bottom: 20px;">
+
+        <h2>Buscar Todos os Usuários</h2>
+        <button id="getAllUsers">Buscar Todos</button>
+        <div id="allUsersResponse" class="response"></div>
+    </div>
+
+    <script>
+        document.getElementById('userForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const telefone = document.getElementById('telefone').value;
+
+            const data = { nome, email, password, telefone };
+            const responseDiv = document.getElementById('response');
+
+            try {
+                const response = await fetch('/user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+                responseDiv.style.display = 'block'; // <-- MOSTRAR DIV
+
+                if (response.ok) {
+                    responseDiv.className = 'response success';
+                } else {
+                    responseDiv.className = 'response error';
+                }
+                responseDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                responseDiv.style.display = 'block'; // <-- MOSTRAR DIV
+                responseDiv.className = 'response error';
+                responseDiv.textContent = `Erro ao conectar com a API: ${error.message}`;
+            }
+        });
+
+        document.getElementById('getAllUsers').addEventListener('click', async () => {
+            const allUsersResponseDiv = document.getElementById('allUsersResponse');
+            try {
+                const response = await fetch('/users');
+                const result = await response.json();
+                allUsersResponseDiv.style.display = 'block'; 
+
+                if (response.ok) {
+                    allUsersResponseDiv.className = 'response success';
+                } else {
+                    allUsersResponseDiv.className = 'response error';
+                }
+                allUsersResponseDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                allUsersResponseDiv.style.display = 'block'; 
+                allUsersResponseDiv.className = 'response error';
+                allUsersResponseDiv.textContent = `Erro ao conectar com a API: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
