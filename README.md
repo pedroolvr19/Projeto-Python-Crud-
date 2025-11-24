@@ -1,6 +1,6 @@
-# Projeto CRUDS (Python + Flask)
+# Projeto CRUD (Python + Flask + SQLAlchemy)
 
-Guia rápido para configurar e rodar o projeto.
+
 
 ### 1. Configurar o Ambiente
 
