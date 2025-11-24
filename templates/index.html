@@ -1,161 +1,169 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Usuários</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        .container {
-            max-width: 600px;
-            margin: 30px auto;
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            color: #0056b3;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        form label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        form input[type="text"],
-        form input[type="email"],
-        form input[type="password"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        form button {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 17px;
-            width: 100%;
-            transition: background-color 0.3s ease;
-        }
-        form button:hover {
-            background-color: #0056b3;
-        }
-        .response {
-            display: none; /* <-- ESCONDIDO POR PADRÃO */
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 4px;
-            background-color: #e9ecef;
-            border: 1px solid #dee2e6;
-            white-space: pre-wrap;
-        }
-        .response.success {
-            background-color: #d4edda;
-            color: #155724;
-            border-color: #c3e6cb;
-        }
-        .response.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
-        }
-    </style>
+    <title>Sistema CRUD Avançado</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
 </head>
-<body>
-    <div class="container">
-        <h1>Cadastrar Novo Usuário</h1>
-        <form id="userForm">
-            <label for="nome">Nome:</label>
-            <input type="text" id="nome" name="nome" required>
+<body class="bg-light">
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-
-            <label for="password">Senha:</label>
-            <input type="password" id="password" name="password" required>
-
-            <label for="telefone">Telefone (opcional):</label>
-            <input type="text" id="telefone" name="telefone">
-
-            <button type="submit">Cadastrar Usuário</button>
-        </form>
-
-        <div id="response" class="response"></div>
-
-        <hr style="margin-top: 30px; margin-bottom: 20px;">
-
-        <h2>Buscar Todos os Usuários</h2>
-        <button id="getAllUsers">Buscar Todos</button>
-        <div id="allUsersResponse" class="response"></div>
+<div class="container mt-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary"><i class="bi bi-people-fill"></i> Gerenciamento de Usuários</h2>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="bi bi-plus-circle"></i> Novo Usuário
+        </button>
     </div>
 
-    <script>
-        document.getElementById('userForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-            const nome = document.getElementById('nome').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const telefone = document.getElementById('telefone').value;
+    <div class="card p-3 mb-4 shadow-sm">
+        <form action="/" method="GET" class="d-flex gap-2">
+            <input type="text" name="search" class="form-control" placeholder="Buscar por nome ou email..." value="{{ search_query }}">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            {% if search_query %}
+                <a href="/" class="btn btn-outline-secondary">Limpar</a>
+            {% endif %}
+        </form>
+    </div>
 
-            const data = { nome, email, password, telefone };
-            const responseDiv = document.getElementById('response');
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users.items %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td><strong>{{ user.nome }}</strong></td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.telefone }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning text-white" data-bs-toggle="modal" data-bs-target="#editModal{{ user.id }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <a href="/user/delete/{{ user.id }}" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja deletar este usuário?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
 
-            try {
-                const response = await fetch('/user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
-                });
+                        <div class="modal fade" id="editModal{{ user.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Editar Usuário</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form action="/user/update/{{ user.id }}" method="POST">
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label>Nome</label>
+                                                <input type="text" name="nome" class="form-control" value="{{ user.nome }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label>Email</label>
+                                                <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label>Telefone</label>
+                                                <input type="text" name="telefone" class="form-control" value="{{ user.telefone }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label>Nova Senha (Deixe em branco para manter)</label>
+                                                <input type="password" name="password" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-primary">Salvar Mudanças</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-                const result = await response.json();
-                responseDiv.style.display = 'block'; // <-- MOSTRAR DIV
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if users.has_prev %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('index', page=users.prev_num, search=search_query) }}">Anterior</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                    {% endif %}
 
-                if (response.ok) {
-                    responseDiv.className = 'response success';
-                } else {
-                    responseDiv.className = 'response error';
-                }
-                responseDiv.textContent = JSON.stringify(result, null, 2);
-            } catch (error) {
-                responseDiv.style.display = 'block'; // <-- MOSTRAR DIV
-                responseDiv.className = 'response error';
-                responseDiv.textContent = `Erro ao conectar com a API: ${error.message}`;
-            }
-        });
+                    <li class="page-item active"><span class="page-link">{{ users.page }}</span></li>
 
-        document.getElementById('getAllUsers').addEventListener('click', async () => {
-            const allUsersResponseDiv = document.getElementById('allUsersResponse');
-            try {
-                const response = await fetch('/users');
-                const result = await response.json();
-                allUsersResponseDiv.style.display = 'block'; 
+                    {% if users.has_next %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('index', page=users.next_num, search=search_query) }}">Próximo</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
 
-                if (response.ok) {
-                    allUsersResponseDiv.className = 'response success';
-                } else {
-                    allUsersResponseDiv.className = 'response error';
-                }
-                allUsersResponseDiv.textContent = JSON.stringify(result, null, 2);
-            } catch (error) {
-                allUsersResponseDiv.style.display = 'block'; 
-                allUsersResponseDiv.className = 'response error';
-                allUsersResponseDiv.textContent = `Erro ao conectar com a API: ${error.message}`;
-            }
-        });
-    </script>
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/user/add" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Nome</label>
+                        <input type="text" name="nome" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Telefone</label>
+                        <input type="text" name="telefone" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label>Senha</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
